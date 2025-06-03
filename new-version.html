@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Architwice – IFC 4.0, Lean-Plankonvertierung & Open Source</title>
+  <meta name="description" content="Architwice: Digitale Grundrisskonvertierung für CRE, FM, ESG, IT/BIM und CFO. Keine KI-Blackbox, sondern ein geprüfter Lean-Workflow für IFC 4.0 und AI-Ready Datensätze.">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;800&family=Funnel+Display:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-dark: #1a2240;
+      --blue-light: #f8fafc;
+      --blue-brand: #21498A;
+      --border-dark: #253054;
+      --border-light: #dde3ee;
+      --text-light: #fff;
+      --text-dark: #101221;
+      --footer-bg-dark: #131a2e;
+      --footer-bg-light: #e9eef6;
+      --panel-radius: 1em;
+      --panel-padding: 2.1em 2.1em 1.8em 2.1em;
+      --maxw: 880px;
+      --shadow: 0 2px 8px rgba(33,73,138,0.06);
+    }
+    html { box-sizing: border-box; font-size: 16px;}
+    *,*:before,*:after { box-sizing: inherit;}
+    body {
+      background: var(--blue-dark);
+      color: var(--text-light);
+      font-family: 'Barlow', Arial, sans-serif;
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.7;
+      transition: background 0.3s, color 0.3s;
+    }
+    [data-theme="light"] body {
+      background: var(--blue-light);
+      color: var(--text-dark);
+    }
+
+    /* HEADER + Logo */
+    header {
+      position: fixed;
+      left: 0; top: 0; width: 100vw; z-index: 11;
+      height: 74px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+      padding-left: 0.8em;
+    }
+    .logo-header {
+      height: 44px; width: 44px;
+      margin: 15px 0 0 15px;
+      border-radius: 50%;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: all;
+      border: none;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: color 0.3s, background 0.2s;
+    }
+    [data-theme="light"] .logo-header {
+      color: var(--blue-dark);
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 19px;
+      right: 26px;
+      background: none;
+      border: 2px solid var(--border-dark);
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      background: rgba(24,32,64,0.65);
+      color: #fff;
+      transition: background 0.2s, border 0.2s, color 0.2s;
+      font-size: 1.4rem;
+    }
+    [data-theme="light"] .theme-toggle {
+      background: #fff;
+      border: 2px solid var(--border-light);
+      color: #1a2240;
+    }
+    .theme-toggle:focus { outline: 2px solid var(--blue-brand); }
+
+    main {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 112px 0 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    @media (max-width:950px) { main { max-width: 99vw; } }
+
+    /* PANELS = Sections */
+    .panel {
+      width: 100%;
+      padding: var(--panel-padding);
+      background: none;
+      border: none;
+      border-radius: 0;
+      margin: 0 auto;
+      box-sizing: border-box;
+      box-shadow: none;
+      display: block;
+      transition: border 0.2s, background 0.2s;
+      border-top: 1.5px solid var(--border-dark);
+    }
+    .panel:first-child { border-top: none; }
+    [data-theme="light"] .panel {
+      border-top: 1.5px solid var(--border-light);
+    }
+    @media (max-width:600px) {
+      .panel { padding: 1.25em 0.5em 1.1em 0.5em;}
+    }
+
+    /* HERO */
+    .hero-headline {
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 2.3rem;
+      margin-bottom: 0.6em;
+      letter-spacing: -0.03em;
+      line-height: 1.07;
+      color: var(--text-light);
+      transition: color 0.3s;
+    }
+    [data-theme="light"] .hero-headline { color: var(--text-dark);}
+    .hero-desc {
+      font-size: 1.11rem;
+      color: #b9bfd1;
+      font-weight: 400;
+      margin-bottom: 1.15em;
+      line-height: 1.6;
+      transition: color 0.3s;
+    }
+    [data-theme="light"] .hero-desc { color: #29345c; }
+    .hero-claim {
+      font-weight: 800;
+      font-size: 1.11rem;
+      margin-bottom: 1.2em;
+      color: var(--text-light);
+      opacity: 0.83;
+      font-family: 'Barlow', Arial, sans-serif;
+      letter-spacing: 0.01em;
+      transition: color 0.3s;
+    }
+
+    /* CTA-Button (invertiert, klar) */
+    .btn-primary {
+      display: inline-block;
+      text-align: center;
+      background: #fff;
+      color: #1a2240;
+      font-family: 'Funnel Display', 'Barlow', Arial, sans-serif;
+      font-weight: 500;
+      border-radius: 2.3em;
+      padding: 0.97em 2.6em;
+      font-size: 1.16rem;
+      border: none;
+      cursor: pointer;
+      margin-top: 1.1em;
+      letter-spacing: 0.01em;
+      box-shadow: 0 2px 14px rgba(33,73,138,0.11);
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      background: #1a2240;
+      color: #fff;
+      outline: none;
+      box-shadow: 0 6px 24px rgba(33,73,138,0.17);
+    }
+    [data-theme="light"] .btn-primary {
+      background: #1a2240;
+      color: #fff;
+    }
+    [data-theme="light"] .btn-primary:hover, [data-theme="light"] .btn-primary:focus {
+      background: #fff;
+      color: #1a2240;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 1.4em;
+      margin-bottom: 2.2em;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      font-family: 'Barlow', Arial, sans-serif;
+      font-size: 1.12rem;
+      font-weight: 800;
+      color: var(--text-light);
+      padding: 0.12em 0.7em 0.18em 0.7em;
+      border-bottom: 2.8px solid transparent;
+      cursor: pointer;
+      opacity: 0.64;
+      transition: color 0.2s, border 0.2s, opacity 0.2s;
+      border-radius: 0;
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-bottom: 2.8px solid #fff;
+      opacity: 1;
+    }
+    [data-theme="light"] .tab-btn {
+      color: var(--blue-brand);
+      opacity: 0.65;
+    }
+    [data-theme="light"] .tab-btn.active {
+      color: #1a2240;
+      border-bottom: 2.8px solid var(--blue-brand);
+      opacity: 1;
+    }
+
+    /* Zweispaltig ab 700px */
+    .two-cols {
+      columns: 2;
+      column-gap: 2.5em;
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    @media (max-width: 700px) {
+      .two-cols { columns: 1; }
+    }
+
+    /* BULLETS (schwarz/weiß, keine Icons) */
+    .bullet-list li {
+      position: relative;
+      margin-bottom: 0.72em;
+      padding-left: 1.2em;
+      color: inherit;
+    }
+    .bullet-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: currentColor;
+      font-size: 1.4em;
+      line-height: 1;
+      top: 0.12em;
+      font-family: inherit;
+      opacity: 0.7;
+    }
+
+    /* Section-Titles in Listen (Subheading) */
+    .list-group-title {
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 1.07em;
+      margin-top: 1.4em;
+      margin-bottom: 0.5em;
+      color: --text-light;
+      letter-spacing: 0.01em;
+      opacity: 0.92;
+    }
+    [data-theme="light"] .list-group-title { color: var(--blue-brand);}
+    /* Table/Workflow as before */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.1em;
+      font-size: 1rem;
+      background: transparent;
+      border-radius: 0.4em;
+      overflow: hidden;
+      box-shadow: none;
+      border: 1.1px solid var(--border-dark);
+      transition: border 0.3s;
+    }
+    [data-theme="light"] table { border: 1.1px solid var(--border-light);}
+    th, td {
+      padding: 0.77em 0.7em;
+      text-align: left;
+      border-bottom: 1px solid var(--border-dark);
+      font-family: 'Barlow', Arial, sans-serif;
+      font-size: 1em;
+      background: transparent;
+      transition: border 0.3s;
+      color: inherit;
+    }
+    th {
+      color: var(--text-light);
+      font-weight: 800;
+      background: transparent;
+      border-bottom: 1.2px solid var(--border-dark);
+    }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { font-weight: 600; }
+    [data-theme="light"] th, [data-theme="light"] td { border-bottom: 1px solid var(--border-light);}
+    [data-theme="light"] th { color: var(--blue-brand); border-bottom: 1.2px solid var(--border-light);}
+    /* Footer */
+    footer {
+      width: 100vw;
+      margin-top: 4.2em;
+      background: var(--footer-bg-dark);
+      color: #fff;
+      padding: 2.1em 0 2.5em 0;
+      border-top: 1.5px solid var(--border-dark);
+      text-align: center;
+      font-size: 1rem;
+      letter-spacing: 0;
+      transition: background 0.3s, border 0.3s, color 0.3s;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.72em;
+      margin-bottom: 1.1em;
+    }
+    .footer-logo {
+      height: 32px;
+      width: 32px;
+      display: inline-block;
+      vertical-align: middle;
+      color: #fff;
+      transition: color 0.3s;
+    }
+    .footer-name {
+      font-family: 'Funnel Display', 'Barlow', Arial, sans-serif;
+      font-weight: 500;
+      font-size: 1.32rem;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-left: 0.17em;
+      margin-top: 0.08em;
+      transition: color 0.3s;
+    }
+    .footer-links a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 1.1em;
+      opacity: 0.8;
+      font-size: 1.01rem;
+      transition: opacity 0.16s;
+    }
+    .footer-links a:hover, .footer-links a:focus {
+      opacity: 1;
+      text-decoration: underline;
+      outline: none;
+    }
+    [data-theme="light"] footer {
+      background: var(--footer-bg-light);
+      color: var(--blue-brand);
+      border-top: 1.5px solid var(--border-light);
+    }
+    [data-theme="light"] .footer-logo { color: var(--blue-dark);}
+    [data-theme="light"] .footer-name, [data-theme="light"] .footer-links a { color: var(--blue-dark);}
+    @media (max-width: 600px) {
+      .footer-logo {height: 22px;width:22px;}
+      .footer-name { font-size: 1.02rem;}
+      footer { font-size: 0.97rem; padding:1.1em 0 1.6em 0;}
+      .footer-links a { margin: 0 0.55em;}
+    }
+    @media (max-width:600px) {
+      .hero-headline { font-size: 1.32rem;}
+    }
+    /* Animation */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(32px);}
+      to   { opacity: 1; transform: none;}
+    }
+  </style>
+</head>
+<body>
+<!-- HEADER -->
+<header>
+  <button class="logo-header" aria-label="Home" tabindex="0">
+    <!-- SVG ICON: Farbe via currentColor -->
+<svg width="26" height="54" viewBox="0 0 694 1048" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path
+     fill="currentColor"
+     d="m 331.5,11.5 c 120.682,-1.3969 217.848,44.9365 291.5,139 37.215,51.294 58.882,108.627 65,172 1.118,59.657 1.618,119.324 1.5,179 -0.333,52 -0.667,104 -1,156 -113.568,-65.947 -227.234,-131.613 -341,-197 -82.582,47.54 -165.082,95.207 -247.5,143 -0.5,114.333 -0.6667,228.666 -0.5,343 165.333,0 330.667,0 496,0 0,-86 0,-172 0,-258 31.393,17.201 62.393,35.201 93,54 1.332,99.235 1.332,198.402 0,297.5 -227.333,0.67 -454.667,0.67 -682,0 -1.33238,-163.765 -1.33238,-327.598 0,-491.5 113.541,-65.602 227.208,-130.936 341,-196 82.863,46.696 165.363,94.029 247.5,142 0.939,-55.682 0.606,-111.349 -1,-167 C 581.289,236.501 534.123,170.335 452.5,129 365.758,92.2673 283.091,99.6006 204.5,151 145.199,195.078 110.699,253.911 101,327.5 c -1.3491,25.312 -1.8491,50.646 -1.5,76 -31.3333,0 -62.6667,0 -94,0 C 4.87993,370.098 6.0466,336.765 9,303.5 30.0691,186.809 92.9024,100.975 197.5,46 239.919,25.8053 284.586,14.3053 331.5,11.5 Z"
+     id="architwice_logo" />
+</svg>
+  </button>
+  <button class="theme-toggle" id="toggleTheme" aria-label="Theme wechseln" tabindex="0">
+    🌙
+  </button>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="panel" style="text-align:center;">
+    <h1 class="hero-headline">Kontrollieren Sie Code & Daten</h1>
+    <p class="hero-desc">
+      Die einzige Open-Source-Plattform für die Digitalisierung von Grundrissen zu IFC 4.0: 
+      Maximale Datenhoheit, geprüfte Qualität, keine Kompromisse.
+    </p>
+    <div class="hero-claim">
+      Eigene Daten. Eigener Code. Zukunftssichere Standards.
+    </div>
+    <a href="#contact" class="btn-primary">Demo &amp; Angebot anfordern</a>
+  </section>
+  
+  <!-- VORTEILE ALS TABS -->
+  <section class="panel" id="benefits">
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn active" id="tab-kontrolle" role="tab" aria-selected="true" aria-controls="panel-kontrolle" tabindex="0">Kontrolle</button>
+      <button class="tab-btn" id="tab-effizienz" role="tab" aria-selected="false" aria-controls="panel-effizienz" tabindex="0">Effizienz</button>
+    </nav>
+    <!-- Kontrolle -->
+    <div id="panel-kontrolle" class="tab-panel" role="tabpanel" aria-labelledby="tab-kontrolle">
+      <ul class="bullet-list two-cols">
+        <li><span class="list-group-title">Open Source &amp; Datenhoheit</span></li>
+        <li><b>Open Source:</b> Keine Blackbox, kein Vendor-Lock-in, auditierbar und jederzeit anpassbar.</li>
+        <li><b>Self-Hosting:</b> Vollständige Kontrolle über Infrastruktur und Updates.</li>
+        <li><b>Compliance:</b> 100% Datenhoheit, keine CLOUD-Act-Risiken, kein verstecktes KI-Training auf Ihren Daten.</li>
+        <li><span class="list-group-title">Transparenz & Souveränität</span></li>
+        <li><b>Transparente Prozesse:</b> Algorithmisch nachvollziehbarer Lean-Workflow, keine versteckten Algorithmen.</li>
+        <li><b>Prüfbare Qualität:</b> <1.2 % Medianabweichung, max. 5 % – nachweislich in tausenden realen Projekten.</li>
+        <li><b>Investitionssicherheit:</b> Unabhängig von Preiserhöhungen, Cloud-Ausfällen, geopolitischen Risiken.</li>
+      </ul>
+    </div>
+    <!-- Effizienz -->
+    <div id="panel-effizienz" class="tab-panel" role="tabpanel" aria-labelledby="tab-effizienz" style="display:none;">
+      <ul class="bullet-list two-cols">
+        <li><span class="list-group-title">Geschwindigkeit & Automation</span></li>
+        <li><b>Bis zu 800 m²/h:</b> Konvertierungsgeschwindigkeit pro Annotator, industrialisierter Workflow.</li>
+        <li><b>Automatisierte QA:</b> Attributzuweisung und Normprüfung nach SIA 416 / DIN 277 / eBKP-H.</li>
+        <li><span class="list-group-title">Integration & Flexibilität</span></li>
+        <li><b>Multi-Format-Export:</b> IFC 4.0, DXF, GeoJSON, CSV, Excel, PDF – nahtlose Integration in Zielsysteme.</li>
+        <li><b>Komplette Attributtiefe:</b> Über 80 prüfbare Attribute für Reporting, ESG, FM.</li>
+        <li><b>Industriestandard:</b> Über 1 % aller Schweizer Wohnungen digitalisiert, keine Synthetik.</li>
+        <li><b>Weniger Kosten:</b> Bis zu 60 % geringere Zertifizierungskosten (EDGE, ESG etc.)</li>
+      </ul>
+    </div>
+  </section>
+  
+  <!-- USP HIGHLIGHTS (restliche Features, klassisch gestapelt, zweispaltig) -->
+  <section class="panel">
+    <h2>Architwice Features</h2>
+    <ul class="bullet-list two-cols">
+      <li><b>Maximale Integrationsfähigkeit:</b> IFC 4.0, DXF, GeoJSON, CSV, Excel, PDF, Schnittstellen zu CAFM, FM, Asset- und Property Management.</li>
+      <li><b>Manuelle Annotation im Web-Editor:</b> Wände, Türen, Räume etc. werden schnell und einfach annotiert.</li>
+      <li><b>Goldstandard-Datensatz:</b> Grundlage des internationalen Standards für Architektur- und Wohnungsdatensätze.</li>
+      <li><b>Kein KI-Blackbox-Risiko:</b> Jederzeit nachvollziehbar und erweiterbar.</li>
+      <li><b>Langfristiger Support:</b> Kontinuierliche Weiterentwicklung, Expertennetzwerk.</li>
+      <li><b>Kein Abo:</b> Volle Kostenkontrolle, transparente Abrechnung.</li>
+    </ul>
+  </section>
+  
+  <section class="panel">
+  <h2>Für alle relevanten Usergruppen</h2>
+  <ul class="bullet-list two-cols">
+    <li><span class="list-group-title">Asset & Property Manager</span></li>
+    <li>Standardisierte Flächendaten für schnelle Portfolioanalysen, ESG-Reporting und verlässliche Kennzahlen</li>
+    <li>Einheitliche Mietflächenübersichten, weniger Nacharbeit, effizientes Betriebskostenmanagement</li>
+    <li><span class="list-group-title">Facility Manager</span></li>
+    <li>Schnell verfügbare, präzise Datenbasis für Wartung, Umbauten und Instandhaltungsplanung</li>
+    <li><span class="list-group-title">Projektentwicklung & Planung</span></li>
+    <li>Effiziente Machbarkeitsstudien, verlässliche Grundlagen für Wettbewerbe und Entwurfsvarianten</li>
+    <li><span class="list-group-title">IT / BIM-Teams</span></li>
+    <li>Open-Source-Stack, IFC.js, Docker/K8s-ready, volle API-Kontrolle, flexible Datenbanken</li>
+    <li><span class="list-group-title">CFO & Einkauf</span></li>
+    <li>Keine Aboverpflichtung, volle Kostenkontrolle, transparente Abrechnung nach Aufwand</li>
+  </ul>
+</section>
+
+  
+  <section class="panel">
+  <h2>Archilyse Service</h2>
+  <ul class="bullet-list two-cols">
+    <li><span class="list-group-title">Enablement & Consulting</span></li>
+    <li>Begleitung von der ersten Bedarfsanalyse bis zum Rollout und zur Schulung Ihres Teams</li>
+    <li>Strategieberatung für Open-Source-Architekturen und Datenhoheit</li>
+    <li><span class="list-group-title">Datenerstellung & Feature Engineering</span></li>
+    <li>Strukturierte Erstellung hochwertiger Trainings- und Auswertungsdaten</li>
+    <li>Feature Engineering für spezifische Anwendungsfälle (z. B. ESG, FM, CRE, IT/BIM)</li>
+    <li><span class="list-group-title">Training & Integration</span></li>
+    <li>Individualisierte Trainings und Workshops für Teams, Power-User und Partner</li>
+    <li>Customizing, Integration und Schnittstellenentwicklung zu bestehenden Systemen</li>
+    <li>Langfristiger Support & kontinuierliche Weiterentwicklung nach Projektabschluss</li>
+  </ul>
+</section>
+
+  <!-- PROZESS/WORKFLOW -->
+<section class="panel" id="workflow">
+  <h2>Der industrielle Architwice-Workflow</h2>
+  <nav class="tabs" role="tablist" style="margin-bottom:1.3em;">
+    <button class="tab-btn active" id="workflow-step-1" role="tab" aria-selected="true" aria-controls="workflow-panel-1" tabindex="0">1</button>
+    <button class="tab-btn" id="workflow-step-2" role="tab" aria-selected="false" aria-controls="workflow-panel-2" tabindex="0">2</button>
+    <button class="tab-btn" id="workflow-step-3" role="tab" aria-selected="false" aria-controls="workflow-panel-3" tabindex="0">3</button>
+    <button class="tab-btn" id="workflow-step-4" role="tab" aria-selected="false" aria-controls="workflow-panel-4" tabindex="0">4</button>
+  </nav>
+  <div id="workflow-panel-1" class="workflow-panel" role="tabpanel" aria-labelledby="workflow-step-1">
+    <div class="list-group-title" style="margin-bottom:0.6em;">Planupload &amp; Sortierung</div>
+    <div>Beliebige Formate (PDF, Raster, CAD, ...), automatische Strukturierung.</div>
+  </div>
+  <div id="workflow-panel-2" class="workflow-panel" role="tabpanel" aria-labelledby="workflow-step-2" style="display:none;">
+    <div class="list-group-title" style="margin-bottom:0.6em;">Skalierung &amp; Kalibrierung</div>
+    <div>Einheitlicher Maßstab, Plausibilitätschecks für höchste Genauigkeit.</div>
+  </div>
+  <div id="workflow-panel-3" class="workflow-panel" role="tabpanel" aria-labelledby="workflow-step-3" style="display:none;">
+    <div class="list-group-title" style="margin-bottom:0.6em;">Annotation</div>
+    <div>Manuelle Annotation, schnelle Bearbeitung, webbasierter Editor.</div>
+  </div>
+  <div id="workflow-panel-4" class="workflow-panel" role="tabpanel" aria-labelledby="workflow-step-4" style="display:none;">
+    <div class="list-group-title" style="margin-bottom:0.6em;">QA &amp; Export</div>
+    <div>Automatische Attributzuweisung, Normprüfung, Export in alle Zielsysteme.</div>
+  </div>
+  <div class="workflow-summary" style="margin-top:1.7em; font-size:1.02em; opacity:.7;">
+    Industrieller Prozess: Bis zu 800 m²/h, von Laien und Experten bedienbar. Medienbrüche und Fehlerquellen werden systematisch eliminiert.
+  </div>
+</section>
+
+
+  <!-- USP VERGLEICH (TABELLE) -->
+  <section class="panel">
+    <h2>Warum Architwice?</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Architwice</th>
+          <th>Proprietäre Tools</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Open Source / AGPL</td><td style="text-align:center;">✔️</td><td style="text-align:center;">❌</td></tr>
+        <tr><td>Self-Hosting möglich</td><td style="text-align:center;">✔️</td><td style="text-align:center;">❌</td></tr>
+        <tr><td>Kein KI-Blackbox-Risiko</td><td style="text-align:center;">✔️</td><td style="text-align:center;">❌</td></tr>
+        <tr><td>CH/EU Compliance</td><td style="text-align:center;">✔️</td><td style="text-align:center;">❌</td></tr>
+        <tr><td>Komplette Attributtiefe (80+)</td><td style="text-align:center;">✔️</td><td style="text-align:center;">❌</td></tr>
+        <tr><td>Industrieller Workflow</td><td style="text-align:center;">✔️</td><td style="text-align:center;">(teilw.)</td></tr>
+        <tr><td>Flexible Integration</td><td style="text-align:center;">✔️</td><td style="text-align:center;">(teilw.)</td></tr>
+        <tr><td>Transparente Kosten</td><td style="text-align:center;">✔️</td><td style="text-align:center;">❌</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- CALL TO ACTION -->
+  <section class="panel" id="contact" style="text-align:center;">
+    <h2>Jetzt eigene Datenhoheit sichern!</h2>
+    <p>Starten Sie unverbindlich mit einem Pilotprojekt oder lassen Sie sich beraten, wie Sie Ihre Grundrissdaten digitalisieren, standardisieren und langfristig kontrollieren können.</p>
+    <a href="mailto:info@architwice.com?subject=Anfrage%20Landingpage" class="btn-primary">Kontakt aufnehmen</a>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <span class="footer-logo">
+<svg width="14" height="29" viewBox="0 0 694 1048" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path
+     fill="currentColor"
+     d="m 331.5,11.5 c 120.682,-1.3969 217.848,44.9365 291.5,139 37.215,51.294 58.882,108.627 65,172 1.118,59.657 1.618,119.324 1.5,179 -0.333,52 -0.667,104 -1,156 -113.568,-65.947 -227.234,-131.613 -341,-197 -82.582,47.54 -165.082,95.207 -247.5,143 -0.5,114.333 -0.6667,228.666 -0.5,343 165.333,0 330.667,0 496,0 0,-86 0,-172 0,-258 31.393,17.201 62.393,35.201 93,54 1.332,99.235 1.332,198.402 0,297.5 -227.333,0.67 -454.667,0.67 -682,0 -1.33238,-163.765 -1.33238,-327.598 0,-491.5 113.541,-65.602 227.208,-130.936 341,-196 82.863,46.696 165.363,94.029 247.5,142 0.939,-55.682 0.606,-111.349 -1,-167 C 581.289,236.501 534.123,170.335 452.5,129 365.758,92.2673 283.091,99.6006 204.5,151 145.199,195.078 110.699,253.911 101,327.5 c -1.3491,25.312 -1.8491,50.646 -1.5,76 -31.3333,0 -62.6667,0 -94,0 C 4.87993,370.098 6.0466,336.765 9,303.5 30.0691,186.809 92.9024,100.975 197.5,46 239.919,25.8053 284.586,14.3053 331.5,11.5 Z"
+     id="architwice_logo" />
+</svg>
+    </span>
+    <span class="footer-name">architwice</span>
+  </div>
+  <div class="footer-links">
+    <a href="/impressum.html">Impressum</a>
+    <a href="/datenschutz.html">Datenschutz</a>
+    <a href="mailto:info@architwice.com">Kontakt</a>
+  </div>
+</footer>
+
+<script>
+  // Theme Toggle (Dark/Bright Mode)
+  const btn = document.getElementById('toggleTheme');
+  function setTheme(mode) {
+    if(mode==="light") {
+      document.documentElement.setAttribute('data-theme','light');
+      btn.textContent = "🌞";
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.setAttribute('data-theme','dark');
+      btn.textContent = "🌙";
+      localStorage.setItem("theme", "dark");
+    }
+  }
+  // System/User Preference
+  let systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let stored = localStorage.getItem("theme");
+  if(stored==="light" || stored==="dark") setTheme(stored);
+  else setTheme(systemDark ? "dark" : "light");
+  btn.onclick = function() {
+    let cur = document.documentElement.getAttribute('data-theme');
+    setTheme(cur === "dark" ? "light" : "dark");
+  };
+
+  // Tabs/Toggles for Benefits
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = [document.getElementById('panel-kontrolle'), document.getElementById('panel-effizienz')];
+  tabs.forEach((tab, i) => {
+    tab.onclick = () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      panels.forEach((p, idx) => p.style.display = idx === i ? 'block' : 'none');
+      tabs.forEach((t,idx) => {
+        t.setAttribute('aria-selected', idx === i ? 'true' : 'false');
+      });
+    }
+    tab.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' || e.key === ' ') tab.click();
+    });
+  });
+  // Workflow Steps Switcher
+const workflowTabs = Array.from(document.querySelectorAll('#workflow .tab-btn'));
+const workflowPanels = [
+  document.getElementById('workflow-panel-1'),
+  document.getElementById('workflow-panel-2'),
+  document.getElementById('workflow-panel-3'),
+  document.getElementById('workflow-panel-4')
+];
+workflowTabs.forEach((tab, i) => {
+  tab.onclick = () => {
+    workflowTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    workflowPanels.forEach((p, idx) => p.style.display = idx === i ? 'block' : 'none');
+    workflowTabs.forEach((t,idx) => {
+      t.setAttribute('aria-selected', idx === i ? 'true' : 'false');
+    });
+  };
+  tab.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' ') tab.click();
+  });
+});
+</script>
+</body>
+</html>
+
